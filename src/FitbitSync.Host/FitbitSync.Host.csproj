@@ -18,7 +18,7 @@
     <ProjectReference Include="..\FitbitSync.Application\FitbitSync.Application.csproj" />
     <ProjectReference Include="..\FitbitSync.Domain\FitbitSync.Domain.csproj" />
     <ProjectReference Include="..\FitbitSync.Persistence\FitbitSync.Persistence.csproj" />
-    <ProjectReference Include="..\FitbitSync.Providers.Fitbit\FitbitSync.Providers.Fitbit.csproj" />
+    <ProjectReference Include="..\FitbitSync.Providers.GoogleHealth\FitbitSync.Providers.GoogleHealth.csproj" />
     <ProjectReference Include="..\FitbitSync.Security\FitbitSync.Security.csproj" />
   </ItemGroup>
 

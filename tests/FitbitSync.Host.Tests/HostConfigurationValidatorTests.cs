@@ -1,5 +1,5 @@
 using System.Security.Cryptography;
-using FitbitSync.Providers.Fitbit;
+using FitbitSync.Providers.GoogleHealth;
 using FluentAssertions;
 
 namespace FitbitSync.Host.Tests;
@@ -17,11 +17,12 @@ public sealed class HostConfigurationValidatorTests
         SigningKeyBase64 = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)),
     };
 
-    private static FitbitOAuthOptions ValidOAuth() => new()
+    private static GoogleOAuthOptions ValidOAuth() => new()
     {
         ClientId = "client-id",
-        RedirectUri = new Uri("http://127.0.0.1:7654/callback"),
-        Scopes = ["heartrate"],
+        ClientSecret = "client-secret",
+        RedirectUri = new Uri("https://localhost:7654/callback"),
+        Scopes = ["https://www.googleapis.com/auth/googlehealth.sleep.readonly"],
     };
 
     [Fact]
@@ -124,14 +125,14 @@ public sealed class HostConfigurationValidatorTests
     }
 
     [Fact]
-    public void ValidateOAuth_NonLoopbackRedirectUri_Throws()
+    public void ValidateOAuth_MissingClientSecret_Throws()
     {
         var oauth = ValidOAuth();
-        oauth.RedirectUri = new Uri("https://example.com/callback");
+        oauth.ClientSecret = "";
 
         var act = () => HostConfigurationValidator.ValidateOAuth(oauth);
 
-        act.Should().Throw<InvalidOperationException>().WithMessage("*loopback*");
+        act.Should().Throw<InvalidOperationException>().WithMessage("*ClientSecret*");
     }
 
     [Fact]

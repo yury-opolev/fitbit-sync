@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 using FitbitSync.Application;
 using FitbitSync.Domain;
 using FitbitSync.Persistence;
-using FitbitSync.Providers.Fitbit;
+using FitbitSync.Providers.GoogleHealth;
 using FitbitSync.Security;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
@@ -24,10 +24,11 @@ public sealed class HostServiceCollectionExtensionsTests
             ["Storage:DatabasePassphrase"] = "test-passphrase",
             ["Storage:ColumnEncryptionKeyBase64"] = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)),
             ["Storage:SigningKeyBase64"] = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)),
-            ["Fitbit:ClientId"] = "test-client-id",
-            ["Fitbit:RedirectUri"] = "http://127.0.0.1:7654/callback",
-            ["Fitbit:Scopes:0"] = "heartrate",
-            ["Fitbit:Scopes:1"] = "sleep",
+            ["Google:ClientId"] = "test-client-id",
+            ["Google:ClientSecret"] = "test-secret",
+            ["Google:RedirectUri"] = "https://localhost:7654/callback",
+            ["Google:Scopes:0"] = "https://www.googleapis.com/auth/googlehealth.activity_and_fitness.readonly",
+            ["Google:Scopes:1"] = "https://www.googleapis.com/auth/googlehealth.sleep.readonly",
         };
 
         if (overrides is not null)
@@ -70,24 +71,15 @@ public sealed class HostServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddFitbitSyncHost_RegistersLoopbackAndBrowserShells()
+    public void AddFitbitSyncHost_BindsGoogleOAuthOptionsFromConfiguration()
     {
         using var provider = BuildProvider(BuildConfiguration());
 
-        provider.GetRequiredService<ILoopbackOAuthListener>().Should().BeOfType<HttpListenerLoopbackOAuthListener>();
-        provider.GetRequiredService<IBrowserLauncher>().Should().BeOfType<SystemBrowserLauncher>();
-    }
-
-    [Fact]
-    public void AddFitbitSyncHost_BindsFitbitOAuthOptionsFromConfiguration()
-    {
-        using var provider = BuildProvider(BuildConfiguration());
-
-        var options = provider.GetRequiredService<FitbitOAuthOptions>();
+        var options = provider.GetRequiredService<GoogleOAuthOptions>();
 
         options.ClientId.Should().Be("test-client-id");
-        options.RedirectUri.Should().Be(new Uri("http://127.0.0.1:7654/callback"));
-        options.Scopes.Should().BeEquivalentTo("heartrate", "sleep");
+        options.RedirectUri.Should().Be(new Uri("https://localhost:7654/callback"));
+        options.Scopes.Should().Contain("https://www.googleapis.com/auth/googlehealth.sleep.readonly");
     }
 
     [Fact]
@@ -96,8 +88,8 @@ public sealed class HostServiceCollectionExtensionsTests
         using var provider = BuildProvider(BuildConfiguration());
         using var scope = provider.CreateScope();
 
-        scope.ServiceProvider.GetRequiredService<FitbitAuthorizationService>().Should().NotBeNull();
-        scope.ServiceProvider.GetRequiredService<IHealthDataProvider>().Should().BeOfType<FitbitHealthDataProvider>();
+        scope.ServiceProvider.GetRequiredService<IAuthorizationService>().Should().BeOfType<GoogleAuthorizationService>();
+        scope.ServiceProvider.GetRequiredService<IHealthDataProvider>().Should().BeOfType<GoogleHealthDataProvider>();
     }
 
     [Fact]

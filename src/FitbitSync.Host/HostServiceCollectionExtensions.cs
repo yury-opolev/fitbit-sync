@@ -1,19 +1,18 @@
 using FitbitSync.Application;
 using FitbitSync.Persistence;
-using FitbitSync.Providers.Fitbit;
+using FitbitSync.Providers.GoogleHealth;
 using FitbitSync.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FitbitSync.Host;
 
-// Composition root. Registers the security/persistence-factory services that AddPersistence intentionally
-// leaves to the host (decision: keys/passphrase come from config, never generated ephemerally), then layers
-// AddPersistence + AddFitbitProvider + AddSyncEngine on top. FitbitOAuthOptions is mapped by hand because its
+// Composition root. Registers the security/persistence-factory seams the host owns, then layers
+// persistence + the Google Health provider + sync engine. GoogleOAuthOptions is mapped by hand because its
 // Uri and IReadOnlyList<string> members do not round-trip cleanly through the default configuration binder.
 public static class HostServiceCollectionExtensions
 {
-    private const string FitbitSection = "Fitbit";
+    private const string GoogleSection = "Google";
 
     public static IServiceCollection AddFitbitSyncHost(this IServiceCollection services, IConfiguration configuration)
     {
@@ -23,7 +22,7 @@ public static class HostServiceCollectionExtensions
         var storage = BindStorageOptions(configuration);
         HostConfigurationValidator.ValidateStorage(storage);
 
-        var configureOAuth = ApplyFitbitOAuthConfiguration(configuration);
+        var configureOAuth = ApplyGoogleOAuthConfiguration(configuration);
         ValidateOAuthConfiguration(configureOAuth);
 
         services.AddSingleton<IKeyProvider>(_ => BuildKeyProvider(storage));
@@ -34,11 +33,8 @@ public static class HostServiceCollectionExtensions
         services.AddSingleton<EncryptedDbContextFactory>();
 
         services.AddPersistence();
-        services.AddFitbitProvider(configureOAuth: configureOAuth);
+        services.AddGoogleHealthProvider(configureOAuth);
         services.AddSyncEngine();
-
-        services.AddSingleton<ILoopbackOAuthListener, HttpListenerLoopbackOAuthListener>();
-        services.AddSingleton<IBrowserLauncher, SystemBrowserLauncher>();
 
         return services;
     }
@@ -50,9 +46,9 @@ public static class HostServiceCollectionExtensions
         return storage;
     }
 
-    private static void ValidateOAuthConfiguration(Action<FitbitOAuthOptions> configureOAuth)
+    private static void ValidateOAuthConfiguration(Action<GoogleOAuthOptions> configureOAuth)
     {
-        var oauth = new FitbitOAuthOptions();
+        var oauth = new GoogleOAuthOptions();
         configureOAuth(oauth);
         HostConfigurationValidator.ValidateOAuth(oauth);
     }
@@ -80,14 +76,14 @@ public static class HostServiceCollectionExtensions
         return new PassphraseKeyProtector(masterSecret);
     }
 
-    private static Action<FitbitOAuthOptions> ApplyFitbitOAuthConfiguration(IConfiguration configuration)
+    private static Action<GoogleOAuthOptions> ApplyGoogleOAuthConfiguration(IConfiguration configuration)
     {
-        var section = configuration.GetSection(FitbitSection);
+        var section = configuration.GetSection(GoogleSection);
 
         return options =>
         {
             options.ClientId = section["ClientId"] ?? "";
-            options.ClientSecret = section["ClientSecret"];
+            options.ClientSecret = section["ClientSecret"] ?? "";
 
             var redirectUri = section["RedirectUri"];
             if (!string.IsNullOrWhiteSpace(redirectUri))

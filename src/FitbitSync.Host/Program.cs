@@ -4,6 +4,13 @@ namespace FitbitSync.Host;
 
 internal static class Program
 {
+    private const string InteractiveLoginGuidance =
+        "Interactive desktop login is not used for Google Health (its OAuth redirect is not a local loopback listener).\n" +
+        "Use the headless flow instead:\n" +
+        "  1. login --begin                                   prints the Google authorize URL (JSON envelope)\n" +
+        "  2. open the URL, approve, copy the redirect URL from the browser's address bar\n" +
+        "  3. login --complete --redirect \"<redirect-url>\"    completes login and stores encrypted tokens";
+
     private static async Task<int> Main(string[] args)
     {
         var command = CommandLineParser.Parse(args);
@@ -45,7 +52,8 @@ internal static class Program
         switch (command.Verb)
         {
             case CliVerb.Login:
-                return await RunHostCommandAsync(args, LoginCommand.ExecuteAsync).ConfigureAwait(false);
+                Console.WriteLine(InteractiveLoginGuidance);
+                return 0;
 
             case CliVerb.Run:
                 return await RunHostCommandAsync(args, RunCommand.ExecuteAsync).ConfigureAwait(false);

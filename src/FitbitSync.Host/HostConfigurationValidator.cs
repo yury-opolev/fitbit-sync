@@ -1,4 +1,4 @@
-using FitbitSync.Providers.Fitbit;
+using FitbitSync.Providers.GoogleHealth;
 
 namespace FitbitSync.Host;
 
@@ -34,28 +34,28 @@ public static class HostConfigurationValidator
         }
     }
 
-    public static void ValidateOAuth(FitbitOAuthOptions oauth)
+    public static void ValidateOAuth(GoogleOAuthOptions oauth)
     {
         ArgumentNullException.ThrowIfNull(oauth);
 
         if (string.IsNullOrWhiteSpace(oauth.ClientId))
         {
-            throw new InvalidOperationException("Fitbit.ClientId is required; register a Fitbit app and supply its client id.");
+            throw new InvalidOperationException("Google.ClientId is required; create a Google Cloud OAuth client and supply its client id.");
+        }
+
+        if (string.IsNullOrWhiteSpace(oauth.ClientSecret))
+        {
+            throw new InvalidOperationException("Google.ClientSecret is required for the confidential web client; supply it via User Secrets or environment variables.");
         }
 
         if (oauth.RedirectUri is null || !oauth.RedirectUri.IsAbsoluteUri)
         {
-            throw new InvalidOperationException("Fitbit.RedirectUri is required and must be an absolute URI (e.g. http://127.0.0.1:7654/callback).");
-        }
-
-        if (!oauth.RedirectUri.IsLoopback)
-        {
-            throw new InvalidOperationException("Fitbit.RedirectUri must be a loopback address; the OAuth callback is bound to localhost only.");
+            throw new InvalidOperationException("Google.RedirectUri is required and must be an absolute URI matching the OAuth client (e.g. https://localhost:7654/callback).");
         }
 
         if (oauth.Scopes is not { Count: > 0 })
         {
-            throw new InvalidOperationException("Fitbit.Scopes is required; configure at least one OAuth scope.");
+            throw new InvalidOperationException("Google.Scopes is required; configure at least one Google Health OAuth scope.");
         }
     }
 

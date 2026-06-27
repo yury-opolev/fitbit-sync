@@ -7,9 +7,9 @@ namespace FitbitSync.Host;
 
 // Thin agent shell: headless login step 2. Loads the pending authorization, rejects an expired one, then
 // validates the pasted callback URL — denial/missing params via LoopbackRedirectParser and the anti-CSRF
-// state via OAuthStateValidator (both tested) — before exchanging the code for tokens through
-// FitbitAuthorizationService. Clears the pending row on success and emits a JSON envelope. Each outcome maps
-// to a stable exit code via HeadlessLoginResponse. Never prints tokens or the verifier.
+// state via OAuthStateValidator (both tested) — before exchanging the code for tokens through the active
+// IAuthorizationService. Clears the pending row on success and emits a JSON envelope. Each outcome maps to
+// a stable exit code via HeadlessLoginResponse. Never prints tokens or the verifier.
 internal static class CompleteLoginCommand
 {
     public const string Name = HeadlessLoginResponse.CompleteCommand;
