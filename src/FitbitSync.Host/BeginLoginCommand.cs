@@ -1,6 +1,5 @@
 using FitbitSync.Domain;
 using FitbitSync.Persistence;
-using FitbitSync.Providers.Fitbit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -22,7 +21,7 @@ internal static class BeginLoginCommand
 
         services.GetRequiredService<ISchemaInitializer>().Initialize();
 
-        var authorization = services.GetRequiredService<FitbitAuthorizationService>();
+        var authorization = services.GetRequiredService<IAuthorizationService>();
         var store = services.GetRequiredService<IPendingAuthorizationStore>();
         var clock = services.GetRequiredService<IClock>();
 

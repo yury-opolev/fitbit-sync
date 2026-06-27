@@ -55,7 +55,7 @@ public sealed class FitbitAuthorizationServiceTests : IDisposable
         var audit = new RecordingAuditTrail();
         var options = BuildExchangeOptions();
         var service = BuildService(store, audit, options);
-        var session = new FitbitAuthorizationSession(new Uri("https://www.fitbit.com/oauth2/authorize"), "state-abc", "verifier-xyz");
+        var session = new AuthorizationSession(new Uri("https://www.fitbit.com/oauth2/authorize"), "state-abc", "verifier-xyz");
 
         var token = await service.CompleteAsync(session, returnedState: "state-abc", code: "auth-code-123", CancellationToken.None);
 
@@ -79,7 +79,7 @@ public sealed class FitbitAuthorizationServiceTests : IDisposable
         var audit = new RecordingAuditTrail();
         var options = BuildExchangeOptions();
         var service = BuildService(store, audit, options);
-        var session = new FitbitAuthorizationSession(new Uri("https://www.fitbit.com/oauth2/authorize"), "state-abc", "verifier-xyz");
+        var session = new AuthorizationSession(new Uri("https://www.fitbit.com/oauth2/authorize"), "state-abc", "verifier-xyz");
 
         var act = async () => await service.CompleteAsync(session, returnedState: "WRONG-state", code: "auth-code-123", CancellationToken.None);
 

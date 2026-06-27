@@ -9,7 +9,7 @@ namespace FitbitSync.Providers.Fitbit;
 // The class is public (the Phase 6 host resolves it) but the constructor is internal because it depends
 // on internal PKCE seams (decision 5 keeps the CSPRNG seam internal). DI constructs it via a factory in
 // AddFitbitProvider; tests construct it directly through InternalsVisibleTo.
-public sealed class FitbitAuthorizationService
+public sealed class FitbitAuthorizationService : IAuthorizationService
 {
     private readonly PkceGenerator pkceGenerator;
     private readonly AuthorizeUrlBuilder authorizeUrlBuilder;
@@ -46,19 +46,19 @@ public sealed class FitbitAuthorizationService
     }
 
     // Start a login: generate PKCE codes + an opaque anti-CSRF state, then build the consent URL.
-    public FitbitAuthorizationSession Begin()
+    public AuthorizationSession Begin()
     {
         var codes = this.pkceGenerator.Generate();
         var state = this.GenerateState();
         var authorizeUrl = this.authorizeUrlBuilder.Build(codes.Challenge, state);
 
-        return new FitbitAuthorizationSession(authorizeUrl, state, codes.Verifier);
+        return new AuthorizationSession(authorizeUrl, state, codes.Verifier);
     }
 
     // Complete a login: validate the returned state against the one we issued (anti-CSRF), exchange the
     // code for tokens, then persist-before-audit exactly like the refresh paths.
     public async Task<OAuthToken> CompleteAsync(
-        FitbitAuthorizationSession session,
+        AuthorizationSession session,
         string returnedState,
         string code,
         CancellationToken ct = default)

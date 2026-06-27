@@ -1,6 +1,5 @@
 using FitbitSync.Domain;
 using FitbitSync.Persistence;
-using FitbitSync.Providers.Fitbit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -54,14 +53,14 @@ internal static class CompleteLoginCommand
             return Emit(LoginCompletionStatus.StateMismatch);
         }
 
-        var authorization = services.GetRequiredService<FitbitAuthorizationService>();
-        var session = new FitbitAuthorizationSession(pending.AuthorizeUrl, pending.State, pending.CodeVerifier);
+        var authorization = services.GetRequiredService<IAuthorizationService>();
+        var session = new AuthorizationSession(pending.AuthorizeUrl, pending.State, pending.CodeVerifier);
 
         try
         {
             await authorization.CompleteAsync(session, callback.State!, callback.Code!, ct).ConfigureAwait(false);
         }
-        catch (FitbitAuthenticationException ex)
+        catch (ProviderAuthenticationException ex)
         {
             return Emit(LoginCompletionStatus.TokenExchangeFailed, ex.Message);
         }

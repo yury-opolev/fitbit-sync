@@ -75,6 +75,7 @@ public static class FitbitProviderServiceCollectionExtensions
             sp.GetRequiredService<ITokenStore>(),
             sp.GetRequiredService<IAuditTrail>(),
             sp.GetRequiredService<FitbitOAuthOptions>()));
+        services.AddScoped<IAuthorizationService>(sp => sp.GetRequiredService<FitbitAuthorizationService>());
 
         services.AddScoped<IHealthDataProvider, FitbitHealthDataProvider>();
 
