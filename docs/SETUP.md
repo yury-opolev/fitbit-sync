@@ -1,59 +1,67 @@
-# Fitbit-sync — Setup guide
+# Fitbit-sync — Setup guide (Google Health API)
 
-How to set up Fitbit-sync from scratch and start syncing your own Fitbit data into a local,
-encrypted database. There are two authorization paths: a **desktop** flow (opens your browser
-automatically) and a **headless / agent** flow (no desktop browser needed). Pick one.
+How to set up Fitbit-sync from scratch and start syncing your Fitbit/Pixel data into a local,
+encrypted database. As of 2026 this app authenticates with **Google OAuth 2.0** and reads data via
+the **Google Health API** (`health.googleapis.com`) — the replacement for the deprecated Fitbit Web
+API. Authorization uses the **headless** `login --begin` / `login --complete` flow (no desktop
+browser-loopback needed).
 
 > Driving this with an AI agent? See [AGENTS.md](../AGENTS.md) for the agent↔human collaboration
 > script.
 
 ## 1. Prerequisites
 
-- **.NET 10 SDK** (10.0.300 or newer) — <https://dotnet.microsoft.com/download/dotnet/10.0>.
-  (A published self-contained binary needs no SDK; building from source does.)
-- A **Fitbit account** and a registered Fitbit app (next step).
-
-Build and test to confirm a healthy checkout:
+- **.NET 10 SDK** (10.0.300+) — <https://dotnet.microsoft.com/download/dotnet/10.0>.
+- A **Google account** whose Fitbit data you want to read.
 
 ```bash
 dotnet build FitbitSync.slnx -c Debug   # 0 warnings (warnings-as-errors)
 dotnet test  FitbitSync.slnx -c Debug   # all tests green
 ```
 
-## 2. Register a Fitbit app (human, one-time)
+## 2. Register a Google Cloud OAuth client (human, one-time)
 
-1. Go to **<https://dev.fitbit.com/apps/new>** (sign in; manage existing apps at
-   <https://dev.fitbit.com/apps>).
-2. Fill in the form. The settings that matter:
-   - **OAuth 2.0 Application Type:** **Personal** — required to read your intraday/personal metrics.
-   - **Redirect URI:** must exactly match `Fitbit:RedirectUri`. Default:
-     `http://127.0.0.1:7654/callback`.
-   - **Default Access Type:** Read-Only is sufficient.
-3. After saving, copy your **OAuth 2.0 Client ID**. A **Client Secret** is only needed for a
-   confidential app and is optional here — PKCE is always used.
+Reference: <https://developers.google.com/health/setup>.
 
-Fitbit's OAuth reference (grant types, scopes, endpoints):
-<https://dev.fitbit.com/build/reference/web-api/authorization/>.
+1. Open the Google Health **setup page** and use **"Enable the API and get an OAuth 2.0 Client ID"**.
+   Create (or pick) a Google Cloud project you administer.
+2. When asked "Where are you calling from?", choose **Web Server**.
+3. Set an **Authorized redirect URI** and remember it — it must match `Google:RedirectUri`. This app
+   ships with `https://localhost:7654/callback`; use that (or change both to match).
+4. Copy the **OAuth 2.0 Client ID** and **Client Secret** (and download the Credentials JSON).
+5. **OAuth consent screen:** User type **External**, publishing status **Testing**. On the Audience
+   page, add **your own email** under **Test users**.
+6. **Data Access → Add or remove scopes:** search "Google Health API" and add the read scopes for the
+   metrics you want — at minimum:
+   - `.../auth/googlehealth.activity_and_fitness.readonly` (steps, active-zone-minutes, VO₂max)
+   - `.../auth/googlehealth.health_metrics_and_measurements.readonly` (heart rate, SpO₂, HRV)
+   - `.../auth/googlehealth.sleep.readonly` (sleep)
+7. **Publish to "In Production"** when you're ready to run unattended (see step 5 caveat below).
 
-> ⚠️ Fitbit does **not** support the OAuth Device Authorization Grant ("device flow"). The only
-> supported grants are Authorization Code (used here, with PKCE) and the deprecated Implicit grant —
-> which is why headless setup uses the copy-paste flow in step 4b rather than a device code.
+> ⚠️ **7-day token caveat.** In **Testing** publishing mode Google refresh tokens **expire after 7
+> days** (you'd re-authorize weekly). Publishing the app to **In Production** makes refresh tokens
+> long-lived. Unverified apps keep a 100-user cap in production too, so as a personal (1-user) app you
+> get long-lived tokens without the third-party security review.
+
+> ⚠️ **Don't reuse a Gmail-scoped client carelessly.** If the same Google Cloud client has also been
+> granted Gmail scopes, do not request `include_granted_scopes` — the Health API rejects any token
+> carrying mail scopes (`403 DISALLOWED_OAUTH_SCOPES`). This app never sends `include_granted_scopes`;
+> a dedicated client for health is cleanest.
 
 ## 3. Configure secrets
 
-`appsettings.json` holds only non-secret shape (redirect URI, scopes, DB path). Secrets come from
-**.NET User Secrets** in development (`UserSecretsId=fitbitsync-host`) or **environment variables** at
-runtime. The `.gitignore` blocks `*.db`, `*.key`, `secrets/`, and `appsettings.Development.json`.
+`appsettings.json` holds non-secret shape only (redirect URI, scopes, db path). Secrets come from
+**.NET User Secrets** (dev, `UserSecretsId=fitbitsync-host`) or **environment variables** (runtime).
 
-Generate two 32-byte base64 keys (run twice, keep both):
-
+Generate two 32-byte base64 keys (run twice):
 - PowerShell: `[Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))`
 - bash: `openssl rand -base64 32`
 
-Then, from `src/FitbitSync.Host`:
+From `src/FitbitSync.Host`:
 
 ```bash
-dotnet user-secrets set "Fitbit:ClientId" "<your-fitbit-client-id>"
+dotnet user-secrets set "Google:ClientId" "<your-google-oauth-client-id>"
+dotnet user-secrets set "Google:ClientSecret" "<your-google-oauth-client-secret>"
 dotnet user-secrets set "Storage:DatabasePassphrase" "<a-strong-passphrase>"
 dotnet user-secrets set "Storage:ColumnEncryptionKeyBase64" "<base64 key #1>"
 dotnet user-secrets set "Storage:SigningKeyBase64" "<base64 key #2>"
@@ -61,71 +69,55 @@ dotnet user-secrets set "Storage:SigningKeyBase64" "<base64 key #2>"
 
 | Key | Secret? | Purpose |
 |-----|---------|---------|
-| `Fitbit:ClientId` | secret | Your Fitbit app's client id. |
-| `Fitbit:ClientSecret` | secret (optional) | Only for a confidential app; PKCE is always used. |
-| `Fitbit:RedirectUri` | non-secret | Loopback callback; ships in `appsettings.json`. |
-| `Fitbit:Scopes` | non-secret | OAuth scopes; ship in `appsettings.json`. |
+| `Google:ClientId` | secret | Google Cloud OAuth (web) client id. |
+| `Google:ClientSecret` | secret | Client secret for the confidential web client. |
+| `Google:RedirectUri` | non-secret | Must match the client's redirect (ships as `https://localhost:7654/callback`). |
+| `Google:Scopes` | non-secret | Google Health read scopes (ship in `appsettings.json`). |
 | `Storage:DatabasePassphrase` | secret | Whole-file SQLite3MC encryption passphrase. |
 | `Storage:ColumnEncryptionKeyBase64` | secret | Base64 of 32 bytes (AES-GCM token cipher). |
 | `Storage:SigningKeyBase64` | secret | Base64 of 32 bytes (HMAC record signing). |
-| `Storage:DatabasePath` | non-secret | Encrypted SQLite file path. |
 
-**Runtime / environment-variable form:** replace `:` with `__` (e.g. `Storage__DatabasePassphrase`),
-and array elements with an index (e.g. `Fitbit__Scopes__0=activity`). See `docs/OPS_RUNBOOK.md` for
-the cross-platform key-file options (DPAPI on Windows, passphrase protector on Linux/containers).
+Env-var form: `:` → `__`, array elements indexed (e.g. `Google__Scopes__0=...`). Cross-platform key-file
+options are in `docs/OPS_RUNBOOK.md`.
 
-## 4. Authorize
+## 4. Authorize (headless flow)
 
-All commands below run from `src/FitbitSync.Host` (or use a published `fitbitsync` binary in place of
-`dotnet run --`).
-
-### 4a. Desktop flow (a browser is available)
+From `src/FitbitSync.Host`:
 
 ```bash
-dotnet run -- login        # opens your browser, captures the loopback redirect, stores encrypted tokens
-```
-
-### 4b. Headless / agent flow (no desktop browser)
-
-```bash
-# Step 1: print the authorize URL (JSON) and store a short-lived pending login.
 dotnet run -- login --begin
 ```
 
-Open the printed `data.authorizeUrl` in any browser, approve, and copy the URL you land on
-(`http://127.0.0.1:7654/callback?code=…&state=…` — the page won't load, which is fine). Then:
+Open the printed `data.authorizeUrl`, sign in, approve the Health permissions, and copy the URL you
+land on (`https://localhost:7654/callback?code=…&state=…` — the page won't load, which is fine). Then:
 
 ```bash
-# Step 2: finish the login from the pasted callback URL.
-dotnet run -- login --complete --redirect "http://127.0.0.1:7654/callback?code=…&state=…"
+dotnet run -- login --complete --redirect "https://localhost:7654/callback?code=…&state=…"
 ```
 
-Both headless commands emit a JSON envelope and a meaningful exit code (see [AGENTS.md](../AGENTS.md)
-for the error-code table). The pending login expires ~15 minutes after `--begin`.
+(`login` with no flags just prints this guidance — there is no desktop-loopback login for Google.)
 
 ## 5. Run
 
 ```bash
-dotnet run -- run          # starts the host + the 15-minute background sync scheduler (Ctrl+C to stop)
+dotnet run -- run          # host + 15-minute background sync scheduler (Ctrl+C to stop)
 ```
 
-Or use the one-shot agent verbs (`sync-once`, `backfill`, `query`, `verify`) — see `README.md` and
-`docs/OPS_RUNBOOK.md`.
+Or the one-shot agent verbs (`sync-once`, `backfill`, `query`, `verify`) — see `README.md`.
 
 ## Troubleshooting
 
-- **Startup fails naming a config key** — the host validates configuration and fails fast; the
-  message names the exact missing/invalid key. Set it (User Secrets in dev, env var at runtime).
-- **`authorization_denied`** on `--complete` — you declined consent or the callback carried an OAuth
-  error. Re-run `login --begin`.
-- **`authorization_expired` / `no_pending_authorization`** — the ~15-minute window lapsed or no
-  `--begin` was run; start over with `login --begin`.
-- **Redirect URI mismatch** — the Fitbit app's Redirect URI must exactly equal `Fitbit:RedirectUri`.
+- **`403 DISALLOWED_OAUTH_SCOPES` (mail scopes)** — the token carries Gmail scopes from a shared
+  client; re-authorize (this app doesn't request `include_granted_scopes`), or use a dedicated client.
+- **Weekly re-authorization** — you're in Testing mode (7-day refresh tokens); publish to In
+  Production.
+- **Scope/access error on the consent screen** — add the Health read scopes on the Data Access page
+  and yourself as a Test user.
+- **Startup fails naming a `Google:` key** — set it via User Secrets / env var.
 
 ## Links
 
-- Operations runbook: [OPS_RUNBOOK.md](OPS_RUNBOOK.md)
-- Agent collaboration guide: [AGENTS.md](../AGENTS.md)
-- Fitbit OAuth reference: <https://dev.fitbit.com/build/reference/web-api/authorization/>
-- Register a Fitbit app: <https://dev.fitbit.com/apps/new>
-- .NET 10 SDK: <https://dotnet.microsoft.com/download/dotnet/10.0>
+- Google Health setup: <https://developers.google.com/health/setup>
+- Migrate from Fitbit Web API: <https://developers.google.com/health/migration>
+- Scopes: <https://developers.google.com/health/scopes>
+- Agent guide: [AGENTS.md](../AGENTS.md) · Ops runbook: [OPS_RUNBOOK.md](OPS_RUNBOOK.md)

@@ -8,6 +8,12 @@ first-class constraints. Built TDD, phased (see `docs/IMPLEMENTATION_PLAN.md`).
 > token columns), a tamper-evident audit hash-chain, HMAC-signed metric rows, OS-protected
 > rotatable keys, and fail-fast configuration validation. No secrets are ever committed.
 
+> **Authentication & data source (2026):** this app authenticates with **Google OAuth 2.0** and reads
+> data via the **Google Health API** (`health.googleapis.com`) — the replacement for the legacy Fitbit
+> Web API, which is deprecated September 2026. Your Fitbit/Pixel device data is read through Google.
+> Mapped metrics: heart rate, steps, sleep, SpO₂, HRV, active-zone-minutes, VO₂max. (Breathing rate and
+> skin temperature have no intraday-listable Google equivalent yet and are not advertised.)
+
 **New here?** Step-by-step setup with links → [docs/SETUP.md](docs/SETUP.md). Driving this with an AI
 agent → [AGENTS.md](AGENTS.md).
 
@@ -96,10 +102,10 @@ secrets come from **.NET User Secrets** (development, `UserSecretsId=fitbitsync-
 
 | Key | Secret? | Purpose |
 |-----|---------|---------|
-| `Fitbit:ClientId` | secret | Your Fitbit app client id. |
-| `Fitbit:ClientSecret` | secret (optional) | Only for a confidential app; PKCE is always used. |
-| `Fitbit:RedirectUri` | non-secret | Loopback callback, e.g. `http://127.0.0.1:7654/callback`. |
-| `Fitbit:Scopes` | non-secret | OAuth scopes to request. |
+| `Google:ClientId` | secret | Your Google Cloud OAuth (web) client id. |
+| `Google:ClientSecret` | secret | Client secret for the confidential web client. |
+| `Google:RedirectUri` | non-secret | OAuth redirect registered on the client, e.g. `https://localhost:7654/callback`. |
+| `Google:Scopes` | non-secret | Google Health read scopes (ships in `appsettings.json`: activity_and_fitness, health_metrics_and_measurements, sleep). |
 | `Storage:DatabasePath` | non-secret | Encrypted SQLite file path. |
 | `Storage:DatabasePassphrase` | secret | Whole-file SQLite3MC encryption passphrase. |
 | `Storage:ColumnEncryptionKeyBase64` | secret | Base64 of 32 random bytes (AES-GCM token cipher). |
@@ -115,15 +121,20 @@ Startup **fails fast** with a named error if required configuration is missing o
 
 ```
 cd src/FitbitSync.Host
-dotnet user-secrets set "Fitbit:ClientId" "<your-fitbit-client-id>"
+dotnet user-secrets set "Google:ClientId" "<your-google-oauth-client-id>"
+dotnet user-secrets set "Google:ClientSecret" "<your-google-oauth-client-secret>"
 dotnet user-secrets set "Storage:DatabasePassphrase" "<a-strong-passphrase>"
 dotnet user-secrets set "Storage:ColumnEncryptionKeyBase64" "<base64 of 32 random bytes>"
 dotnet user-secrets set "Storage:SigningKeyBase64" "<base64 of 32 random bytes>"
-dotnet run -- login
+dotnet run -- login --begin                              # prints the Google authorize URL (JSON)
+# open it, approve, copy the redirect URL from the address bar, then:
+dotnet run -- login --complete --redirect "<redirect-url>"
 dotnet run -- run
 ```
 
-The Fitbit app's redirect URI must match `Fitbit:RedirectUri`.
+The Google OAuth client's redirect URI must match `Google:RedirectUri`. To run unattended long-term,
+publish the OAuth consent app to **"In Production"** (Testing mode refresh tokens expire after 7 days).
+Full walkthrough: [docs/SETUP.md](docs/SETUP.md).
 
 **Headless / agent setup (no desktop browser):** run `login --begin`, open the returned
 `authorizeUrl`, approve, then `login --complete --redirect "<callback-url>"`. Both emit a JSON
