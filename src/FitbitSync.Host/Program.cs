@@ -25,6 +25,14 @@ internal static class Program
             case CliVerb.Query:
                 return await RunAgentCommandAsync(args, command, QueryCommandShell.Name,
                     (host, options, ct) => QueryCommandShell.ExecuteAsync(host, options, ct)).ConfigureAwait(false);
+
+            case CliVerb.Login when command.Options?.LoginMode == LoginMode.Begin:
+                return await RunAgentCommandAsync(args, command, BeginLoginCommand.Name,
+                    (host, options, ct) => BeginLoginCommand.ExecuteAsync(host, options, ct)).ConfigureAwait(false);
+
+            case CliVerb.Login when command.Options?.LoginMode == LoginMode.Complete:
+                return await RunAgentCommandAsync(args, command, CompleteLoginCommand.Name,
+                    (host, options, ct) => CompleteLoginCommand.ExecuteAsync(host, options, ct)).ConfigureAwait(false);
         }
 
         if (command.Error is not null)

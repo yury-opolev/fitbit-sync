@@ -100,11 +100,17 @@ Follows the existing convention: thin untested IO shells; logic in pure, tested 
 |---|---|---|
 | begin / complete success | 0 | — |
 | bad flags (`--complete` without `--redirect`) / config | 1 | `usage` / `startup` |
-| no pending session / expired | 2 | `no_pending_authorization` / `authorization_expired` |
+| no pending session | 2 | `no_pending_authorization` |
+| pending session expired | 2 | `authorization_expired` |
+| `--redirect` not a valid absolute URL | 2 | `invalid_redirect` |
+| redirect carried an OAuth error (e.g. `access_denied`) | 2 | `authorization_denied` |
 | state mismatch (CSRF) | 2 | `state_mismatch` |
-| redirect carried `access_denied` | 2 | `authorization_denied` |
 | token exchange failed | 2 | `token_exchange_failed` |
-| rate-limited during exchange | 3 | `rate_limited` |
+
+> Implementation note: Fitbit's token endpoint surfaces every non-success (including HTTP 429) as a
+> single `FitbitAuthenticationException`, so there is no distinct rate-limited path on `--complete`;
+> all exchange failures map to `token_exchange_failed` (exit 2). The earlier draft's `rate_limited`
+> (exit 3) row was dropped, and `invalid_redirect` was added.
 
 The envelope never emits tokens, the verifier, or any secret. The pasted redirect URL (which
 carries the single-use auth code) is consumed immediately and not logged.

@@ -11,4 +11,8 @@ public sealed record CliOptions
     public MetricType? Metric { get; init; }
 
     public bool Coverage { get; init; }
+
+    public LoginMode LoginMode { get; init; } = LoginMode.Interactive;
+
+    public string? Redirect { get; init; }
 }

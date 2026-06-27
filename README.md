@@ -8,6 +8,9 @@ first-class constraints. Built TDD, phased (see `docs/IMPLEMENTATION_PLAN.md`).
 > token columns), a tamper-evident audit hash-chain, HMAC-signed metric rows, OS-protected
 > rotatable keys, and fail-fast configuration validation. No secrets are ever committed.
 
+**New here?** Step-by-step setup with links → [docs/SETUP.md](docs/SETUP.md). Driving this with an AI
+agent → [AGENTS.md](AGENTS.md).
+
 ## Architecture
 
 Clean/Hexagonal: dependencies point inward to the domain. The Fitbit integration is an outer
@@ -30,7 +33,9 @@ adapter so a future Google Health provider can replace it without touching the c
 fitbitsync <command>
 
 Operator commands:
-  login         One-time loopback OAuth flow; persists encrypted tokens.
+  login         One-time loopback OAuth flow (desktop browser); persists encrypted tokens.
+  login --begin / login --complete --redirect <url>
+                Headless two-step OAuth for agents/servers (JSON envelope). See AGENTS.md.
   run           Start the host and the 15-minute background sync scheduler.
   verify        Verify the audit hash-chain and stored-sample signatures, then exit.
   rotate-keys   Roll the signing key and re-encrypt the database, then exit.
@@ -119,6 +124,10 @@ dotnet run -- run
 ```
 
 The Fitbit app's redirect URI must match `Fitbit:RedirectUri`.
+
+**Headless / agent setup (no desktop browser):** run `login --begin`, open the returned
+`authorizeUrl`, approve, then `login --complete --redirect "<callback-url>"`. Both emit a JSON
+envelope with meaningful exit codes. See [docs/SETUP.md](docs/SETUP.md) and [AGENTS.md](AGENTS.md).
 
 ## Build & test
 

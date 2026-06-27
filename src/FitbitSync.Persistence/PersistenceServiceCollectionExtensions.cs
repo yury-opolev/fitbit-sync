@@ -17,6 +17,7 @@ public static class PersistenceServiceCollectionExtensions
 
         services.AddScoped<IMetricRepository, MetricRepository>();
         services.AddScoped<ITokenStore, TokenStore>();
+        services.AddScoped<IPendingAuthorizationStore, PendingAuthorizationStore>();
         services.AddScoped<ISyncCheckpointStore, SyncCheckpointStore>();
         services.AddScoped<IAuditTrail, AuditTrail>();
         services.AddScoped<IIntegrityVerifier, IntegrityVerifier>();

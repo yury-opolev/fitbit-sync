@@ -8,7 +8,9 @@ public static class CommandLineParser
         "Usage: fitbitsync <command>\n" +
         "\n" +
         "Operator commands:\n" +
-        "  login        Run the one-time loopback OAuth flow and persist tokens.\n" +
+        "  login        Run the one-time loopback OAuth flow (desktop browser) and persist tokens.\n" +
+        "  login --begin                       Headless step 1: emit the authorize URL as JSON and store the pending login.\n" +
+        "  login --complete --redirect <url>   Headless step 2: finish login from the pasted callback URL (JSON).\n" +
         "  run          Start the host and the background sync scheduler.\n" +
         "  verify       Verify audit-chain and stored-sample integrity, then exit.\n" +
         "  rotate-keys  Roll the signing key and re-encrypt the database, then exit.\n" +
@@ -35,7 +37,7 @@ public static class CommandLineParser
 
         return verb.ToLowerInvariant() switch
         {
-            "login" => new ParsedCliCommand(CliVerb.Login),
+            "login" => ParseLogin(args),
             "run" => new ParsedCliCommand(CliVerb.Run),
             "verify" => new ParsedCliCommand(CliVerb.Verify),
             "rotate-keys" => new ParsedCliCommand(CliVerb.RotateKeys),
@@ -45,6 +47,77 @@ public static class CommandLineParser
             "help" or "--help" or "-h" => new ParsedCliCommand(CliVerb.Help),
             _ => new ParsedCliCommand(CliVerb.None, $"Unknown command '{verb}'."),
         };
+    }
+
+    private static ParsedCliCommand ParseLogin(IReadOnlyList<string> args)
+    {
+        var begin = false;
+        var complete = false;
+        string? redirect = null;
+
+        for (var i = 1; i < args.Count; i++)
+        {
+            var token = args[i].Trim();
+
+            switch (token.ToLowerInvariant())
+            {
+                case "--begin":
+                    begin = true;
+                    break;
+
+                case "--complete":
+                    complete = true;
+                    break;
+
+                case "--redirect":
+                    if (!TryTakeValue(args, ref i, out var redirectValue))
+                    {
+                        return InvalidLogin(begin, complete, "login --redirect requires a value (the full callback URL).");
+                    }
+
+                    redirect = redirectValue;
+                    break;
+
+                default:
+                    return InvalidLogin(begin, complete, $"login: unknown option '{token}'.");
+            }
+        }
+
+        if (begin && complete)
+        {
+            return InvalidLogin(begin, complete, "login: --begin and --complete are mutually exclusive.");
+        }
+
+        if (complete)
+        {
+            if (redirect is null)
+            {
+                return InvalidLogin(begin, complete, "login --complete requires --redirect <callback-url>.");
+            }
+
+            return new ParsedCliCommand(CliVerb.Login, Options: new CliOptions { LoginMode = LoginMode.Complete, Redirect = redirect });
+        }
+
+        if (begin)
+        {
+            return new ParsedCliCommand(CliVerb.Login, Options: new CliOptions { LoginMode = LoginMode.Begin });
+        }
+
+        if (redirect is not null)
+        {
+            return new ParsedCliCommand(
+                CliVerb.Login,
+                "login: --redirect is only valid together with --complete.",
+                new CliOptions { LoginMode = LoginMode.Interactive });
+        }
+
+        return new ParsedCliCommand(CliVerb.Login, Options: new CliOptions { LoginMode = LoginMode.Interactive });
+    }
+
+    private static ParsedCliCommand InvalidLogin(bool begin, bool complete, string message)
+    {
+        var mode = complete ? LoginMode.Complete : begin ? LoginMode.Begin : LoginMode.Interactive;
+        return new ParsedCliCommand(CliVerb.Login, message, new CliOptions { LoginMode = mode });
     }
 
     private static ParsedCliCommand ParseOptions(CliVerb verb, IReadOnlyList<string> args)

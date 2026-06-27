@@ -13,6 +13,8 @@ public sealed class FitbitSyncDbContext : DbContext
 
     public DbSet<OAuthTokenRow> OAuthTokens => this.Set<OAuthTokenRow>();
 
+    public DbSet<PendingAuthorizationRow> PendingAuthorizations => this.Set<PendingAuthorizationRow>();
+
     public DbSet<SyncCheckpointRow> SyncCheckpoints => this.Set<SyncCheckpointRow>();
 
     public DbSet<AuditEntryRow> AuditEntries => this.Set<AuditEntryRow>();
