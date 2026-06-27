@@ -15,6 +15,10 @@ internal static class GoogleHealthDataTypeCatalog
             [MetricType.Steps] = new("steps", "steps.interval.civil_start_time", IntradayResolution.OneMinute),
             [MetricType.HeartRate] = new("heart-rate", "heartRate.sample_time.civil_time", IntradayResolution.OneMinute),
             [MetricType.Sleep] = new("sleep", "sleep.interval.civil_end_time", IntradayResolution.Daily),
+            [MetricType.SpO2] = new("oxygen-saturation", "oxygenSaturation.sample_time.civil_time", IntradayResolution.OneMinute),
+            [MetricType.Hrv] = new("heart-rate-variability", "heartRateVariability.sample_time.civil_time", IntradayResolution.OneMinute),
+            [MetricType.ActiveZoneMinutes] = new("active-zone-minutes", "activeZoneMinutes.interval.civil_start_time", IntradayResolution.OneMinute),
+            [MetricType.VO2Max] = new("vo2-max", "vo2Max.sample_time.civil_time", IntradayResolution.Daily),
         };
 
     public static GoogleDataTypeDescriptor Resolve(MetricType metric) =>

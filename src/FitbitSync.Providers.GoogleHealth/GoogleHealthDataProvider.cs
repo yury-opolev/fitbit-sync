@@ -14,6 +14,10 @@ public sealed class GoogleHealthDataProvider : IHealthDataProvider
         new(MetricType.Steps, IntradayResolution.OneMinute),
         new(MetricType.HeartRate, IntradayResolution.OneMinute),
         new(MetricType.Sleep, IntradayResolution.Daily),
+        new(MetricType.SpO2, IntradayResolution.OneMinute),
+        new(MetricType.Hrv, IntradayResolution.OneMinute),
+        new(MetricType.ActiveZoneMinutes, IntradayResolution.OneMinute),
+        new(MetricType.VO2Max, IntradayResolution.Daily),
     ];
 
     private readonly GoogleHealthApiClient apiClient;
@@ -58,6 +62,10 @@ public sealed class GoogleHealthDataProvider : IHealthDataProvider
             MetricType.Steps => GoogleStepsMapper.Map(await this.apiClient.GetJsonAsync<GoogleStepsResponse>(url, ct).ConfigureAwait(false), descriptor.Resolution),
             MetricType.HeartRate => GoogleHeartRateMapper.Map(await this.apiClient.GetJsonAsync<GoogleHeartRateResponse>(url, ct).ConfigureAwait(false), descriptor.Resolution),
             MetricType.Sleep => GoogleSleepMapper.Map(await this.apiClient.GetJsonAsync<GoogleSleepResponse>(url, ct).ConfigureAwait(false), descriptor.Resolution),
+            MetricType.SpO2 => GoogleOxygenSaturationMapper.Map(await this.apiClient.GetJsonAsync<GoogleOxygenSaturationResponse>(url, ct).ConfigureAwait(false), descriptor.Resolution),
+            MetricType.Hrv => GoogleHeartRateVariabilityMapper.Map(await this.apiClient.GetJsonAsync<GoogleHeartRateVariabilityResponse>(url, ct).ConfigureAwait(false), descriptor.Resolution),
+            MetricType.ActiveZoneMinutes => GoogleActiveZoneMinutesMapper.Map(await this.apiClient.GetJsonAsync<GoogleActiveZoneMinutesResponse>(url, ct).ConfigureAwait(false), descriptor.Resolution),
+            MetricType.VO2Max => GoogleVo2MaxMapper.Map(await this.apiClient.GetJsonAsync<GoogleVo2MaxResponse>(url, ct).ConfigureAwait(false), descriptor.Resolution),
             _ => throw new NotSupportedException($"Google Health provider does not support metric '{metric}'."),
         };
 }
