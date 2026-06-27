@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite.Core" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" />
+    <PackageReference Include="SQLite3MC.PCLRaw.bundle" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FitbitSync.Domain\FitbitSync.Domain.csproj" />
+    <ProjectReference Include="..\FitbitSync.Security\FitbitSync.Security.csproj" />
+  </ItemGroup>
+
+</Project>

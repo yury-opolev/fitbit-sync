@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <UserSecretsId>fitbitsync-host</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FitbitSync.Application\FitbitSync.Application.csproj" />
+    <ProjectReference Include="..\FitbitSync.Domain\FitbitSync.Domain.csproj" />
+    <ProjectReference Include="..\FitbitSync.Persistence\FitbitSync.Persistence.csproj" />
+    <ProjectReference Include="..\FitbitSync.Providers.Fitbit\FitbitSync.Providers.Fitbit.csproj" />
+    <ProjectReference Include="..\FitbitSync.Security\FitbitSync.Security.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="FitbitSync.Host.Tests" />
+  </ItemGroup>
+
+</Project>

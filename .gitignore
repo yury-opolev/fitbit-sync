@@ -1,0 +1,19 @@
+## Build output
+bin/
+obj/
+artifacts/
+
+## Secrets, keys, local databases — never commit
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+secrets/
+*.secret.*
+*.key
+appsettings.Development.json
+appsettings.*.Local.json
+
+## User-specific / IDE
+.vs/
+*.user

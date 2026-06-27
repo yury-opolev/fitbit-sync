@@ -1,0 +1,28 @@
+using FitbitSync.Domain;
+
+namespace FitbitSync.Providers.Fitbit;
+
+internal static class HeartRateMapper
+{
+    private const string Unit = "bpm";
+
+    public static IReadOnlyList<MetricSample> Map(FitbitHeartRateResponse response, IntradayResolution resolution)
+    {
+        if (response.Days.Count == 0)
+        {
+            return [];
+        }
+
+        var date = response.Days[0].DateTime;
+
+        return response.Intraday.Dataset
+            .Select(point => new MetricSample(
+                MetricType.HeartRate,
+                new DateTimeOffset(date.ToDateTime(point.Time), TimeSpan.Zero),
+                point.Value,
+                Unit,
+                resolution,
+                FitbitHealthDataProvider.ProviderKey))
+            .ToList();
+    }
+}

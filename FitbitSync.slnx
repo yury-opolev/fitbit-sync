@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FitbitSync.Application/FitbitSync.Application.csproj" />
+    <Project Path="src/FitbitSync.Domain/FitbitSync.Domain.csproj" />
+    <Project Path="src/FitbitSync.Host/FitbitSync.Host.csproj" />
+    <Project Path="src/FitbitSync.Persistence/FitbitSync.Persistence.csproj" />
+    <Project Path="src/FitbitSync.Providers.Fitbit/FitbitSync.Providers.Fitbit.csproj" />
+    <Project Path="src/FitbitSync.Security/FitbitSync.Security.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FitbitSync.Application.Tests/FitbitSync.Application.Tests.csproj" />
+    <Project Path="tests/FitbitSync.Domain.Tests/FitbitSync.Domain.Tests.csproj" />
+    <Project Path="tests/FitbitSync.Host.Tests/FitbitSync.Host.Tests.csproj" />
+    <Project Path="tests/FitbitSync.Persistence.Tests/FitbitSync.Persistence.Tests.csproj" />
+    <Project Path="tests/FitbitSync.Providers.Fitbit.Tests/FitbitSync.Providers.Fitbit.Tests.csproj" />
+    <Project Path="tests/FitbitSync.Security.Tests/FitbitSync.Security.Tests.csproj" />
+  </Folder>
+</Solution>
