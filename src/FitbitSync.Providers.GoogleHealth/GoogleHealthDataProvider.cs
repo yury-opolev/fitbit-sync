@@ -12,6 +12,8 @@ public sealed class GoogleHealthDataProvider : IHealthDataProvider
     private static readonly IReadOnlyList<MetricCapability> CapabilityList =
     [
         new(MetricType.Steps, IntradayResolution.OneMinute),
+        new(MetricType.HeartRate, IntradayResolution.OneMinute),
+        new(MetricType.Sleep, IntradayResolution.Daily),
     ];
 
     private readonly GoogleHealthApiClient apiClient;
@@ -54,6 +56,8 @@ public sealed class GoogleHealthDataProvider : IHealthDataProvider
         metric switch
         {
             MetricType.Steps => GoogleStepsMapper.Map(await this.apiClient.GetJsonAsync<GoogleStepsResponse>(url, ct).ConfigureAwait(false), descriptor.Resolution),
+            MetricType.HeartRate => GoogleHeartRateMapper.Map(await this.apiClient.GetJsonAsync<GoogleHeartRateResponse>(url, ct).ConfigureAwait(false), descriptor.Resolution),
+            MetricType.Sleep => GoogleSleepMapper.Map(await this.apiClient.GetJsonAsync<GoogleSleepResponse>(url, ct).ConfigureAwait(false), descriptor.Resolution),
             _ => throw new NotSupportedException($"Google Health provider does not support metric '{metric}'."),
         };
 }

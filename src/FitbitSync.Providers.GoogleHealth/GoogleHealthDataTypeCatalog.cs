@@ -13,6 +13,8 @@ internal static class GoogleHealthDataTypeCatalog
         new Dictionary<MetricType, GoogleDataTypeDescriptor>
         {
             [MetricType.Steps] = new("steps", "steps.interval.civil_start_time", IntradayResolution.OneMinute),
+            [MetricType.HeartRate] = new("heart-rate", "heartRate.sample_time.civil_time", IntradayResolution.OneMinute),
+            [MetricType.Sleep] = new("sleep", "sleep.interval.civil_end_time", IntradayResolution.Daily),
         };
 
     public static GoogleDataTypeDescriptor Resolve(MetricType metric) =>
