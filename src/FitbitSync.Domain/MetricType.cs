@@ -11,4 +11,10 @@ public enum MetricType
     Temperature,
     VO2Max,
     ActiveZoneMinutes,
+    ActiveCaloriesBurned,
+    BasalCaloriesBurned,
+    SleepDeepMinutes,
+    SleepLightMinutes,
+    SleepRemMinutes,
+    SleepAwakeMinutes,
 }
