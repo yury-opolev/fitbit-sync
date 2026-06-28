@@ -46,7 +46,11 @@ public sealed class GoogleHealthApiClient
                 throw new GoogleAuthenticationException("Google Health API returned 401 Unauthorized; re-authorize with `login`.");
             }
 
-            response.EnsureSuccessStatusCode();
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+                throw new HttpRequestException($"Google Health {(int)response.StatusCode} for '{relativePath}': {errorBody}");
+            }
 
             var payload = await response.Content.ReadFromJsonAsync<T>(ct).ConfigureAwait(false);
             return payload ?? throw new InvalidOperationException($"Google Health response body for '{relativePath}' was empty.");
