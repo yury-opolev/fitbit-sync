@@ -21,6 +21,16 @@ internal static class GoogleHealthDataTypeCatalog
             [MetricType.Hrv] = new("heart-rate-variability", "heart_rate_variability.sample_time.civil_time", IntradayResolution.OneMinute),
             [MetricType.ActiveZoneMinutes] = new("active-zone-minutes", "active_zone_minutes.interval.civil_start_time", IntradayResolution.OneMinute),
             [MetricType.VO2Max] = new("vo2-max", "vo2_max.sample_time.civil_time", IntradayResolution.Daily),
+            [MetricType.ActiveCaloriesBurned] = new("active-energy-burned", "active_energy_burned.interval.civil_start_time", IntradayResolution.OneMinute),
+            [MetricType.BasalCaloriesBurned] = new("basal-energy-burned", "basal_energy_burned.interval.civil_start_time", IntradayResolution.OneMinute),
+
+            // Sleep-stage minute metrics all derive from the SAME "sleep" session dataPoint (stage detail
+            // lives in sleep.summary.stagesSummary[]). They reuse the sleep descriptor: same dataType, same
+            // end-time filter member. The stage mapper selects the per-stage entry by type.
+            [MetricType.SleepDeepMinutes] = new("sleep", "sleep.interval.civil_end_time", IntradayResolution.Daily),
+            [MetricType.SleepLightMinutes] = new("sleep", "sleep.interval.civil_end_time", IntradayResolution.Daily),
+            [MetricType.SleepRemMinutes] = new("sleep", "sleep.interval.civil_end_time", IntradayResolution.Daily),
+            [MetricType.SleepAwakeMinutes] = new("sleep", "sleep.interval.civil_end_time", IntradayResolution.Daily),
         };
 
     public static GoogleDataTypeDescriptor Resolve(MetricType metric) =>

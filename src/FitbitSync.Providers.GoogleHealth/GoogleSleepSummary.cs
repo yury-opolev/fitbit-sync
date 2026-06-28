@@ -13,4 +13,9 @@ internal sealed class GoogleSleepSummary
 
     [JsonPropertyName("minutesInSleepPeriod")]
     public string? MinutesInSleepPeriod { get; set; }
+
+    // Per-stage rollup: one entry per stage type (DEEP/LIGHT/REM/AWAKE/...), each with its total minutes.
+    // Already delivered on every sleep dataPoint; the stage mappers index into this by type.
+    [JsonPropertyName("stagesSummary")]
+    public List<GoogleStageSummary>? StagesSummary { get; set; }
 }
