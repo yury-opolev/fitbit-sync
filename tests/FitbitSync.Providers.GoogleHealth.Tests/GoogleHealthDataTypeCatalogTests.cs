@@ -24,6 +24,12 @@ public sealed class GoogleHealthDataTypeCatalogTests
     [InlineData(MetricType.Hrv, "heart-rate-variability", "heart_rate_variability.sample_time.civil_time")]
     [InlineData(MetricType.ActiveZoneMinutes, "active-zone-minutes", "active_zone_minutes.interval.civil_start_time")]
     [InlineData(MetricType.VO2Max, "vo2-max", "vo2_max.sample_time.civil_time")]
+    [InlineData(MetricType.ActiveCaloriesBurned, "active-energy-burned", "active_energy_burned.interval.civil_start_time")]
+    [InlineData(MetricType.BasalCaloriesBurned, "basal-energy-burned", "basal_energy_burned.interval.civil_start_time")]
+    [InlineData(MetricType.SleepDeepMinutes, "sleep", "sleep.interval.civil_end_time")]
+    [InlineData(MetricType.SleepLightMinutes, "sleep", "sleep.interval.civil_end_time")]
+    [InlineData(MetricType.SleepRemMinutes, "sleep", "sleep.interval.civil_end_time")]
+    [InlineData(MetricType.SleepAwakeMinutes, "sleep", "sleep.interval.civil_end_time")]
     public void Resolve_MultiWordMetric_UsesKebabCaseDataTypeAndSnakeCaseFilterMember(MetricType metric, string expectedDataType, string expectedFilterMember)
     {
         var descriptor = GoogleHealthDataTypeCatalog.Resolve(metric);

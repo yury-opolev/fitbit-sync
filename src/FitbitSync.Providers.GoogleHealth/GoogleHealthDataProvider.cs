@@ -74,10 +74,10 @@ public sealed class GoogleHealthDataProvider : IHealthDataProvider
             MetricType.VO2Max => GoogleVo2MaxMapper.Map(await this.apiClient.GetJsonAsync<GoogleVo2MaxResponse>(url, ct).ConfigureAwait(false), descriptor.Resolution),
             MetricType.ActiveCaloriesBurned => GoogleActiveEnergyBurnedMapper.Map(await this.apiClient.GetJsonAsync<GoogleActiveEnergyBurnedResponse>(url, ct).ConfigureAwait(false), descriptor.Resolution),
             MetricType.BasalCaloriesBurned => GoogleBasalEnergyBurnedMapper.Map(await this.apiClient.GetJsonAsync<GoogleBasalEnergyBurnedResponse>(url, ct).ConfigureAwait(false), descriptor.Resolution),
-            MetricType.SleepDeepMinutes => GoogleSleepStageMapper.Map(await this.apiClient.GetJsonAsync<GoogleSleepResponse>(url, ct).ConfigureAwait(false), descriptor.Resolution, "DEEP", metric),
-            MetricType.SleepLightMinutes => GoogleSleepStageMapper.Map(await this.apiClient.GetJsonAsync<GoogleSleepResponse>(url, ct).ConfigureAwait(false), descriptor.Resolution, "LIGHT", metric),
-            MetricType.SleepRemMinutes => GoogleSleepStageMapper.Map(await this.apiClient.GetJsonAsync<GoogleSleepResponse>(url, ct).ConfigureAwait(false), descriptor.Resolution, "REM", metric),
-            MetricType.SleepAwakeMinutes => GoogleSleepStageMapper.Map(await this.apiClient.GetJsonAsync<GoogleSleepResponse>(url, ct).ConfigureAwait(false), descriptor.Resolution, "AWAKE", metric),
+            MetricType.SleepDeepMinutes => GoogleSleepStageMapper.Map(await this.apiClient.GetJsonAsync<GoogleSleepResponse>(url, ct).ConfigureAwait(false), descriptor.Resolution, metric),
+            MetricType.SleepLightMinutes => GoogleSleepStageMapper.Map(await this.apiClient.GetJsonAsync<GoogleSleepResponse>(url, ct).ConfigureAwait(false), descriptor.Resolution, metric),
+            MetricType.SleepRemMinutes => GoogleSleepStageMapper.Map(await this.apiClient.GetJsonAsync<GoogleSleepResponse>(url, ct).ConfigureAwait(false), descriptor.Resolution, metric),
+            MetricType.SleepAwakeMinutes => GoogleSleepStageMapper.Map(await this.apiClient.GetJsonAsync<GoogleSleepResponse>(url, ct).ConfigureAwait(false), descriptor.Resolution, metric),
             _ => throw new NotSupportedException($"Google Health provider does not support metric '{metric}'."),
         };
 }
